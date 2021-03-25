@@ -23,6 +23,13 @@ const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-
 const EthereumGasStationFeeProvider = require('@liquality/ethereum-gas-station-fee-provider')
 const EthereumRpcFeeProvider = require('@liquality/ethereum-rpc-fee-provider')
 
+const NearSwapProvider = require('@liquality/near-swap-provider')
+const NearJsWalletProvider = require('@liquality/near-js-wallet-provider')
+const NearRpcProvider = require('@liquality/near-rpc-provider')
+const NearRpcFeeProvider = require('@liquality/near-rpc-fee-provider')
+const NearSwapFindProvider = require('@liquality/near-swap-find-provider')
+const NearNetworks = require('@liquality/near-networks')
+
 function createBtcClient () {
   const btcConfig = config.assets.BTC
   const network = BitcoinNetworks[btcConfig.network]
@@ -124,11 +131,29 @@ function createERC20Client (asset) {
   return erc20Client
 }
 
+function createNearClient() {
+  const nearConfig = config.assets.NEAR
+  const network = NearNetworks[nearConfig.network]
+
+  const nearClient = new Client()
+  if (nearConfig.wallet && nearConfig.wallet.type === 'js') {
+    nearClient.addProvider(new NearJsWalletProvider(network, nearConfig.wallet.mnemonic))
+  }
+
+  nearClient.addProvider(new NearSwapProvider())
+  nearClient.addProvider(new NearSwapFindProvider(network.helperUrl))
+  nearClient.addProvider(new NearRpcFeeProvider())
+  nearClient.addProvider(new NearRpcProvider(network))
+
+  return nearClient
+}
+
 const clientCreators = {
   BTC: createBtcClient,
   ETH: createEthClient,
   RBTC: createEthClient,
-  ERC20: createERC20Client
+  ERC20: createERC20Client,
+  NEAR: createNearClient
 }
 
 const clients = {}
